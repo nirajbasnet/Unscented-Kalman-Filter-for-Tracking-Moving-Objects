@@ -6,5 +6,7 @@ Example
 R	8.60363	0.0290616	-2.99903	1477010443399637	8.6	0.25	-3.00029	0
 L	8.45	0.25	1477010443349642	8.45	0.25	-3.00027	0 
 
-#Output file format:
-est_px est_py est_vx est_vy meas_px meas_py gt_px gt_py gt_vx gt_vy
+Output file format:
+time_stamp px_state py_state v_state yaw_angle_state yaw_rate_state sensor_type NIS px_measured py_measured px_ground_truth py_ground_truth vx_ground_truth vy_ground_truth
+
+ 

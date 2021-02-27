@@ -7,6 +7,10 @@
 #include "ukf.h"
 #include "ground_truth_package.h"
 #include "measurement_package.h"
+#include "matplotlibcpp.h"
+#include <cmath>
+
+namespace plt = matplotlibcpp;
 
 using namespace std;
 using Eigen::MatrixXd;
@@ -134,6 +138,14 @@ int main(int argc, char *argv[]) {
     // used to compute the RMSE later
     vector<VectorXd> estimations;
     vector<VectorXd> ground_truth;
+    vector<double> est_px_ekf;
+    vector<double> est_py_ekf;
+    vector<double> gt_px_ekf;
+    vector<double> gt_py_ekf;
+    vector<double> radar_px_ekf;
+    vector<double> radar_py_ekf;
+    vector<double> lidar_px_ekf;
+    vector<double> lidar_py_ekf;
 
     // start filtering from the second frame (the speed is unknown in the first
     // frame)
@@ -183,6 +195,8 @@ int main(int argc, char *argv[]) {
             // output the lidar sensor measurement px and py
             out_file_ << measurement_pack_list[k].raw_measurements_(0) << "\t";
             out_file_ << measurement_pack_list[k].raw_measurements_(1) << "\t";
+            lidar_px_ekf.push_back(measurement_pack_list[k].raw_measurements_(0));
+            lidar_py_ekf.push_back(measurement_pack_list[k].raw_measurements_(1));
 
         } else if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::RADAR) {
             // sensor type
@@ -192,10 +206,12 @@ int main(int argc, char *argv[]) {
             out_file_ << ukf.NIS_radar_ << "\t";
 
             // output radar measurement in cartesian coordinates
-            float ro = measurement_pack_list[k].raw_measurements_(0);
+            float rho = measurement_pack_list[k].raw_measurements_(0);
             float phi = measurement_pack_list[k].raw_measurements_(1);
-            out_file_ << ro * cos(phi) << "\t"; // px measurement
-            out_file_ << ro * sin(phi) << "\t"; // py measurement
+            out_file_ << rho * cos(phi) << "\t"; // px measurement
+            out_file_ << rho * sin(phi) << "\t"; // py measurement
+            radar_px_ekf.push_back(rho * cos(phi));
+            radar_py_ekf.push_back(rho * sin(phi));
         }
 
         // output the ground truth
@@ -217,11 +233,33 @@ int main(int argc, char *argv[]) {
         estimations.push_back(ukf_x_cartesian_);
         ground_truth.push_back(gt_pack_list[k].gt_values_);
 
+        est_px_ekf.push_back(x_estimate_);
+        est_py_ekf.push_back(y_estimate_);
+        gt_px_ekf.push_back(gt_pack_list[k].gt_values_(0));
+        gt_py_ekf.push_back(gt_pack_list[k].gt_values_(1));
+
     }
 
     // compute the accuracy (RMSE)
     Tools tools;
     cout << "RMSE" << endl << tools.CalculateRMSE(estimations, ground_truth) << endl;
+
+    // Set the size of output image to 1200x780 pixels
+    plt::figure_size(1200, 780);
+    // Plot line from given x and y data. Color is selected automatically.
+    plt::named_plot("EKF estimate",est_px_ekf, est_py_ekf,"g");
+    plt::named_plot("Ground Truth",gt_px_ekf, gt_py_ekf,"r");
+    plt::named_plot("Radar data",radar_px_ekf, radar_py_ekf,"+");
+    plt::named_plot("Lidar data",lidar_px_ekf, lidar_py_ekf,"*");
+
+    plt::xlabel("x  (in meters)");
+    plt::ylabel("y  (in meters)");
+    plt::title("UKF tracking of moving object");
+    // Enable legend.
+    plt::legend();
+    
+    // Save the image (file format is determined by the extension)
+    plt::save("../output/state_estimate.png");
 
     // close files
     if (out_file_.is_open()) {

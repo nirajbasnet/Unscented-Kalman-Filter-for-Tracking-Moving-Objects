@@ -28,4 +28,7 @@ objects ) with noisy LiDAR and RADAR measurements. For the motion model, CTRV(Co
    some sample inputs in `data/` folder. Also, specify output filename in `output/` folder.
     - eg. `./UnscentedKF ../data/obj_pose-laser-radar-synthetic-input.txt ../output/state_estimate.csv`
    
-   
+## Sample Output
+<p align="center">
+  <img  src="./output/state_estimate.png" alt="Sample output">
+</p>
